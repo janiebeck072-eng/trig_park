@@ -54,6 +54,15 @@ button,input,select,textarea{font:inherit}
   font-weight:950;
   letter-spacing:.05em;
   color:var(--red-dark);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-right:auto;
+}
+.brand::before{
+  content:"🎟️";
+  font-size:1.2rem;
+  line-height:1;
 }
 .brand span{color:var(--blue)}
 .status{
@@ -61,10 +70,7 @@ button,input,select,textarea{font:inherit}
   font-size:.82rem;
   font-weight:800;
 }
-.topbar::before{
-  content:"🎟️";
-  font-size:1.2rem;
-}
+.topbar::before{content:none}
 
 /* Hero resembles walking toward the park gates */
 .hero{
@@ -451,6 +457,27 @@ select,input[type=number]{
   .lesson-canvas,#ferrisCanvas,#heroCanvas{height:330px}
   .segment-controls{grid-template-columns:1fr 1fr}
 }
+
+/* Sinusoidal Swirl gets a true pool/water environment */
+#waveCanvas{
+  background:
+    linear-gradient(
+      180deg,
+      #d9f6ff 0%,
+      #b8edff 18%,
+      #83d9f3 48%,
+      #4db8df 78%,
+      #2384b6 100%
+    );
+}
+#station1 .canvas-wrap{
+  background:#c6effa;
+  border-color:#5ca9c2;
+  box-shadow:
+    inset 0 0 0 4px rgba(255,255,255,.45),
+    0 8px 20px rgba(46,137,171,.12);
+}
+
 </style>
 
 </head>
@@ -808,23 +835,76 @@ function waveState(){
   $("#waveEquation").textContent=`y = ${A}${type}(${B}x) + ${D}`;
 
   const c=$("#waveCanvas"),{x,w,h}=fitCanvas(c),xmin=0,xmax=12,ymin=0,ymax=14;
+
+  // Pool environment first, then graph/grid on top.
+  const water=x.createLinearGradient(0,0,0,h);
+  water.addColorStop(0,"#dff8ff");
+  water.addColorStop(.28,"#aeeaff");
+  water.addColorStop(.62,"#65cbe9");
+  water.addColorStop(1,"#2385b5");
+  x.fillStyle=water;
+  x.fillRect(0,0,w,h);
+
+  // Soft underwater light bands.
+  x.strokeStyle="rgba(255,255,255,.18)";
+  x.lineWidth=2;
+  for(let yy=42;yy<h;yy+=42){
+    x.beginPath();
+    for(let px=0;px<=w;px+=8){
+      const py=yy+Math.sin(px*.035+yy*.03)*3;
+      if(px===0)x.moveTo(px,py);else x.lineTo(px,py);
+    }
+    x.stroke();
+  }
+
+  // Pool tile strip along the physical floor.
+  x.fillStyle="rgba(235,247,238,.88)";
+  x.fillRect(0,h-26,w,26);
+  x.strokeStyle="rgba(71,151,171,.35)";
+  x.lineWidth=1;
+  for(let px=0;px<w;px+=34){x.beginPath();x.moveTo(px,h-26);x.lineTo(px,h);x.stroke()}
+  x.beginPath();x.moveTo(0,h-13);x.lineTo(w,h-13);x.stroke();
+
   const {sx,sy}=graphAxes(x,w,h,xmin,xmax,ymin,ymax);
 
-  // pool/water context
-  x.fillStyle="rgba(88,225,242,.07)";
+  // Water-height region and surface line.
+  x.fillStyle="rgba(19,132,187,.16)";
   x.fillRect(0,sy(D),w,sy(0)-sy(D));
-  x.strokeStyle="rgba(88,225,242,.65)";
-  x.setLineDash([7,6]);x.beginPath();x.moveTo(0,sy(D));x.lineTo(w,sy(D));x.stroke();x.setLineDash([]);
-  x.fillStyle="#9fb4c4";x.font="12px system-ui";x.fillText("water height / midline",10,sy(D)-8);
-  x.fillText("pool bottom = minimum",10,sy(D-A)+18);
 
-  x.strokeStyle="#58e1f2";x.lineWidth=3;x.beginPath();
+  x.strokeStyle="rgba(255,255,255,.92)";
+  x.lineWidth=2.5;
+  x.beginPath();
+  for(let px=0;px<=w;px+=6){
+    const py=sy(D)+Math.sin(px*.065)*3;
+    if(px===0)x.moveTo(px,py);else x.lineTo(px,py);
+  }
+  x.stroke();
+
+  x.strokeStyle="rgba(25,102,143,.65)";
+  x.lineWidth=1.5;
+  x.setLineDash([7,6]);
+  x.beginPath();x.moveTo(0,sy(D));x.lineTo(w,sy(D));x.stroke();
+  x.setLineDash([]);
+
+  x.fillStyle="#174f70";
+  x.font="700 12px system-ui";
+  x.fillText("water height / midline",10,Math.max(16,sy(D)-9));
+  x.fillText("pool bottom = minimum",10,Math.min(h-34,sy(D-A)+18));
+
+  // Student's modeled sinusoid.
+  x.strokeStyle="#ffffff";
+  x.shadowColor="rgba(15,104,150,.55)";
+  x.shadowBlur=8;
+  x.lineWidth=3.5;
+  x.beginPath();
   for(let i=0;i<=700;i++){
     const xv=xmin+(xmax-xmin)*i/700;
     const yv=A*(type==="sin"?Math.sin(B*xv):Math.cos(B*xv))+D;
     if(i===0)x.moveTo(sx(xv),sy(yv));else x.lineTo(sx(xv),sy(yv));
   }
   x.stroke();
+  x.shadowBlur=0;
+  x.shadowColor="transparent";
 }
 ["waveType","waveA","waveB","waveD"].forEach(id=>$("#"+id).oninput=waveState);
 $("#checkWave").onclick=()=>{
