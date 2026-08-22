@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polynomial Park: Trig Ride Studio</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#07131c;
+  --panel:#102230;
+  --panel2:#0b1a25;
+  --ink:#f7fbff;
+  --muted:#9fb4c4;
+  --cyan:#58e1f2;
+  --lime:#b8f56b;
+  --yellow:#ffd56a;
+  --coral:#ff8c7a;
+  --violet:#a78cff;
+  --line:#284253;
+  --good:#76e3a6;
+  --bad:#ff8d97;
+}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 10% 8%,rgba(88,225,242,.1),transparent 22%),
+    radial-gradient(circle at 90% 12%,rgba(167,140,255,.10),transparent 25%),
+    linear-gradient(180deg,#07131c,#091923 50%,#07121a);
+}
+button,input,select,textarea{font:inherit}
+.shell{width:min(1280px,96%);margin:auto;padding:24px 0 80px}
+.topbar{
+  position:sticky;top:10px;z-index:20;
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  padding:13px 18px;border:1px solid var(--line);border-radius:18px;
+  background:rgba(8,21,31,.9);backdrop-filter:blur(10px)
+}
+.brand{font-weight:900;letter-spacing:.06em}
+.brand span{color:var(--cyan)}
+.status{color:var(--muted);font-size:.86rem}
+
+.hero{
+  min-height:66vh;display:grid;grid-template-columns:1.02fr .98fr;gap:28px;align-items:center;
+  padding:62px 8px 36px
+}
+.eyebrow,.kicker{color:var(--cyan);font-weight:900;letter-spacing:.18em;font-size:.75rem}
+h1{font-size:clamp(3.1rem,7.7vw,7.2rem);line-height:.9;letter-spacing:-.06em;margin:12px 0 18px}
+.hero p{max-width:720px;color:var(--muted);font-size:1.16rem;line-height:1.7}
+.hero-card,.panel,.ride-card,.formula-card,.reflection-card{
+  border:1px solid var(--line);background:rgba(16,34,48,.93);border-radius:24px
+}
+.hero-card{padding:20px}
+#heroCanvas{width:100%;height:360px;display:block;background:#061018;border:1px solid #183647;border-radius:18px}
+.start{
+  border:none;background:var(--lime);color:#142114;padding:14px 20px;border-radius:12px;
+  font-weight:900;cursor:pointer;box-shadow:0 7px 0 #648f3a;margin-top:16px
+}
+.start:active{transform:translateY(4px);box-shadow:0 3px 0 #648f3a}
+
+.park-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start}
+.sidebar{
+  position:sticky;top:92px;border:1px solid var(--line);background:rgba(14,29,41,.96);
+  border-radius:22px;padding:18px
+}
+.sidebar h2{margin:0 0 5px}
+.sidebar p{color:var(--muted);font-size:.9rem;line-height:1.5}
+.nav-btn{
+  width:100%;margin-top:9px;text-align:left;padding:11px 12px;border-radius:10px;
+  border:1px solid var(--line);background:#091720;color:var(--ink);cursor:pointer;font-weight:800
+}
+.nav-btn.active,.nav-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.progress{height:9px;background:#071019;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:15px 0}
+.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--lime));transition:.3s}
+
+.main{min-width:0}
+.panel{padding:24px;margin-bottom:18px}
+.panel h2{margin:5px 0 8px;font-size:clamp(1.7rem,3vw,2.35rem)}
+.panel p{color:var(--muted);line-height:1.65}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.triple{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ride-card,.formula-card,.reflection-card{padding:20px}
+.ride-card h3,.formula-card h3{margin:7px 0}
+.small{font-size:.86rem;color:var(--muted);line-height:1.5}
+.math{
+  margin:14px 0;padding:15px;border-radius:14px;background:#08141d;border:1px solid #1b3748;
+  color:var(--yellow);font-family:Georgia,serif;font-size:clamp(1.2rem,2.5vw,1.8rem);text-align:center
+}
+.canvas-wrap{background:#061018;border:1px solid #193648;border-radius:18px;padding:8px}
+.lesson-canvas{width:100%;height:410px;display:block}
+.control{margin:16px 0}
+.control label{display:block;color:var(--muted);font-size:.77rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+input[type=range]{width:100%;accent-color:var(--cyan)}
+select,input[type=number]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#07131c;color:var(--ink)}
+.readout{display:flex;justify-content:space-between;color:var(--muted);font-size:.83rem;margin-top:6px}
+.badge{color:var(--cyan);font-weight:900}
+.choice-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.choice,.action{
+  border:1px solid var(--line);background:#08151e;color:var(--ink);border-radius:11px;
+  padding:11px 14px;cursor:pointer;font-weight:800
+}
+.choice:hover,.action:hover{border-color:var(--cyan)}
+.choice.correct{border-color:var(--good);color:var(--good)}
+.choice.wrong{border-color:var(--bad);color:var(--bad)}
+.feedback{min-height:42px;margin-top:10px;font-weight:800;color:var(--cyan)}
+.unit-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px}
+.unit-card{border:1px solid var(--line);background:#0a1721;border-radius:14px;padding:12px;text-align:center}
+.unit-card strong{display:block;color:var(--yellow);margin-bottom:8px}
+.unit-card input{margin-top:5px;text-align:center}
+.builder{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px}
+.param-list{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.param{background:#0a1721;border:1px solid var(--line);border-radius:12px;padding:12px}
+.param strong{display:block;color:var(--yellow);font-size:1.1rem}
+.ferris-stage{position:relative;background:#061018;border:1px solid #193648;border-radius:18px;overflow:hidden}
+#ferrisCanvas{width:100%;height:430px;display:block}
+.reflection-card textarea{
+  width:100%;min-height:120px;background:#07131c;color:var(--ink);border:1px solid var(--line);
+  border-radius:12px;padding:13px;resize:vertical
+}
+.checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+.check{background:#091721;border:1px solid var(--line);border-radius:12px;padding:12px}
+@media(max-width:980px){
+  .hero,.park-grid,.split,.builder{grid-template-columns:1fr}
+  .sidebar{position:relative;top:auto}.triple{grid-template-columns:1fr}.param-list{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:680px){
+  .topbar{position:relative;top:auto}.status{display:none}.unit-grid{grid-template-columns:1fr 1fr}.checklist{grid-template-columns:1fr}
+  .lesson-canvas,#ferrisCanvas,#heroCanvas{height:330px}
+}
+
+.precheck{
+  margin:18px 0;
+  padding:18px;
+  background:#0a1721;
+  border:1px solid var(--line);
+  border-radius:16px;
+}
+.precheck h3{margin:0 0 8px;color:var(--yellow)}
+.precheck.locked{opacity:.52}
+.precheck .choice-row{margin-top:10px}
+.concept-note{
+  margin:14px 0;
+  padding:13px 15px;
+  border-left:4px solid var(--cyan);
+  background:#081720;
+  border-radius:10px;
+  color:var(--muted);
+  line-height:1.55;
+}
+.builder.locked{
+  opacity:.34;
+  pointer-events:none;
+  filter:grayscale(.35);
+}
+.segment-list{display:grid;gap:12px;margin-top:14px}
+.segment-card{
+  border:1px solid var(--line);
+  background:#091720;
+  border-radius:16px;
+  padding:15px;
+}
+.segment-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+.segment-head strong{color:var(--yellow)}
+.segment-controls{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+}
+.segment-controls .control{margin:4px 0}
+.segment-equation{
+  margin-top:10px;
+  padding:10px;
+  border-radius:10px;
+  background:#07131c;
+  color:var(--cyan);
+  font-family:Georgia,serif;
+  font-size:.94rem;
+}
+.remove-segment{
+  border:1px solid #5a3540;
+  background:#25131a;
+  color:#ff9eaa;
+  border-radius:9px;
+  padding:7px 9px;
+  cursor:pointer;
+}
+.coaster-summary{
+  margin-top:12px;
+  padding:13px;
+  background:#07131c;
+  border:1px solid var(--line);
+  border-radius:12px;
+  color:var(--muted);
+  font-size:.87rem;
+  line-height:1.5;
+}
+.justification{
+  width:100%;
+  min-height:105px;
+  padding:12px;
+  border-radius:11px;
+  background:#07131c;
+  border:1px solid var(--line);
+  color:var(--ink);
+  resize:vertical;
+}
+.ferris-buttons{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.confirm-panel{
+  padding:16px;
+  border:1px solid var(--line);
+  background:#091720;
+  border-radius:15px;
+  margin-bottom:14px;
+}
+.rider-key{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:var(--muted);
+  font-size:.82rem;
+  margin-top:8px;
+}
+.rider-dot{width:10px;height:10px;border-radius:50%;background:var(--coral);display:inline-block}
+@media(max-width:760px){
+  .segment-controls{grid-template-columns:1fr 1fr}
+}
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div class="topbar">
+  <div class="brand">POLYNOMIAL PARK <span>• TRIG RIDE STUDIO</span></div>
+  <div class="status">Model • Transform • Test • Refine</div>
+</div>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">WELCOME TO THE DESIGN TEAM</div>
+    <h1>BUILD THE<br>RIDES WITH TRIG</h1>
+    <p>
+      Your park needs a wave pool, a roller coaster, and a Ferris wheel.
+      Each ride must be modeled with sine or cosine. Instead of sketching static graphs,
+      you will manipulate the parameters and watch the ride change in real time.
+    </p>
+    <button class="start" id="startBtn">OPEN THE PARK →</button>
+  </div>
+  <div class="hero-card">
+    <div class="kicker">LIVE PARK PREVIEW</div>
+    <canvas id="heroCanvas"></canvas>
+  </div>
+</section>
+
+<section class="park-grid" id="park">
+  <aside class="sidebar">
+    <h2>Park Map</h2>
+    <p>Complete the four stations. Your progress updates as you check each design.</p>
+    <div class="progress"><div id="progressBar"></div></div>
+    <button class="nav-btn active" data-target="station0">00 • Trig Tune-Up</button>
+    <button class="nav-btn" data-target="station1">01 • Sinusoidal Swirl</button>
+    <button class="nav-btn" data-target="station2">02 • Phase Shifter</button>
+    <button class="nav-btn" data-target="station3">03 • Pi in the Sky</button>
+    <button class="nav-btn" data-target="station4">04 • Park Review</button>
+  </aside>
+
+  <main class="main">
+
+    <section class="panel" id="station0">
+      <div class="kicker">STATION 00 • TRIG TUNE-UP</div>
+      <h2>Reconnect the unit circle to the graph</h2>
+      <p>
+        Before designing rides, recall a few benchmark sine and cosine values.
+        Enter decimal values or familiar approximations.
+      </p>
+
+      <div class="unit-grid">
+        <div class="unit-card"><strong>0°</strong><input type="number" step=".01" placeholder="sin" data-sin="0"><input type="number" step=".01" placeholder="cos" data-cos="1"></div>
+        <div class="unit-card"><strong>30°</strong><input type="number" step=".01" placeholder="sin" data-sin=".5"><input type="number" step=".01" placeholder="cos" data-cos=".866"></div>
+        <div class="unit-card"><strong>45°</strong><input type="number" step=".01" placeholder="sin" data-sin=".707"><input type="number" step=".01" placeholder="cos" data-cos=".707"></div>
+        <div class="unit-card"><strong>60°</strong><input type="number" step=".01" placeholder="sin" data-sin=".866"><input type="number" step=".01" placeholder="cos" data-cos=".5"></div>
+        <div class="unit-card"><strong>90°</strong><input type="number" step=".01" placeholder="sin" data-sin="1"><input type="number" step=".01" placeholder="cos" data-cos="0"></div>
+      </div>
+      <div class="choice-row"><button class="action" id="checkUnit">CHECK VALUES</button></div>
+      <div class="feedback" id="unitFeedback"></div>
+
+      <div class="split" style="margin-top:18px">
+        <div class="canvas-wrap"><canvas id="parentCanvas" class="lesson-canvas"></canvas></div>
+        <div class="formula-card">
+          <div class="kicker">PARENT FUNCTIONS</div>
+          <div class="math">y = sin(x)<br>y = cos(x)</div>
+          <p class="small">
+            Sine begins on its midline and rises. Cosine begins at a maximum.
+            That difference can make one model feel more natural than the other depending on the starting position of a ride.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="station1">
+      <div class="kicker">RIDE 01 • THE SINUSOIDAL SWIRL</div>
+      <h2>Design the wave pool</h2>
+      <p>
+        Before you touch the sliders, establish what the graph represents. In this model,
+        the <strong>lowest point of the sinusoid represents the bottom of the pool</strong>,
+        while the <strong>midline represents the water height</strong>.
+      </p>
+
+      <div class="precheck" id="wavePrecheck">
+        <h3>Parameter Checkpoint</h3>
+        <p class="small">Answer both questions correctly to unlock the wave-pool designer.</p>
+
+        <p><strong>1.</strong> What does the bottom of the graph represent?</p>
+        <div class="choice-row" id="waveBottomChoices">
+          <button class="choice" data-answer="correct">The bottom of the pool</button>
+          <button class="choice" data-answer="wrong">The average water height</button>
+          <button class="choice" data-answer="wrong">The wave frequency</button>
+        </div>
+
+        <p><strong>2.</strong> What does the midline represent?</p>
+        <div class="choice-row" id="waveMidlineChoices">
+          <button class="choice" data-answer="wrong">The bottom of the pool</button>
+          <button class="choice" data-answer="correct">The height of the water</button>
+          <button class="choice" data-answer="wrong">The period of the waves</button>
+        </div>
+
+        <div class="feedback" id="wavePreFeedback">Confirm both meanings before graphing.</div>
+      </div>
+
+      <div class="builder locked" id="waveBuilder">
+        <div class="canvas-wrap"><canvas id="waveCanvas" class="lesson-canvas"></canvas></div>
+        <div class="formula-card">
+          <div class="concept-note">
+            If the midline is the water height <strong>D</strong> and the minimum is the pool bottom,
+            then the modeled depth is <strong>A</strong>, because minimum = D − A.
+          </div>
+          <div class="control"><label>Function</label><select id="waveType"><option value="sin">sine</option><option value="cos">cosine</option></select></div>
+          <div class="control"><label>Amplitude A</label><input id="waveA" type="range" min="1" max="5" step=".5" value="2"><div class="readout"><span>water depth / wave range</span><span class="badge" id="waveAOut">2</span></div></div>
+          <div class="control"><label>Frequency parameter B</label><input id="waveB" type="range" min=".5" max="3" step=".25" value="1"><div class="readout"><span>how often waves repeat</span><span class="badge" id="waveBOut">1</span></div></div>
+          <div class="control"><label>Vertical shift D</label><input id="waveD" type="range" min="2" max="8" step=".5" value="5"><div class="readout"><span>water height / midline</span><span class="badge" id="waveDOut">5</span></div></div>
+          <div class="param-list">
+            <div class="param"><span class="small">Pool bottom</span><strong id="poolBottomOut">3</strong></div>
+            <div class="param"><span class="small">Water height</span><strong id="waterHeightOut">5</strong></div>
+            <div class="param"><span class="small">Maximum</span><strong id="waveMaxOut">7</strong></div>
+            <div class="param"><span class="small">Period</span><strong id="wavePeriodOut">6.28</strong></div>
+          </div>
+          <div class="math" id="waveEquation"></div>
+          <button class="action" id="checkWave">LOCK IN WAVE POOL</button>
+          <div class="feedback" id="waveFeedback"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="station2">
+      <div class="kicker">RIDE 02 • THE PHASE SHIFTER</div>
+      <h2>String together a complete roller coaster</h2>
+      <p>
+        Real tracks do not need to follow one sinusoid forever. Build a <strong>piecewise coaster</strong>
+        by joining several sine and cosine functions, each with its own transformation and domain restriction.
+        Your goal is to make the pieces meet closely enough to look like one continuous track.
+      </p>
+
+      <div class="split">
+        <div class="canvas-wrap"><canvas id="coasterCanvas" class="lesson-canvas"></canvas></div>
+
+        <div class="formula-card">
+          <div class="kicker">TRACK SEGMENTS</div>
+          <p class="small">Create 2–4 pieces. Domains should run left-to-right and neighboring pieces should meet.</p>
+          <div id="segmentList" class="segment-list"></div>
+          <div class="choice-row">
+            <button class="action" id="addSegment">+ ADD TRIG SEGMENT</button>
+          </div>
+          <div class="coaster-summary" id="coasterSummary"></div>
+        </div>
+      </div>
+
+      <div class="reflection-card" style="margin-top:16px">
+        <div class="kicker">CHECK FOR UNDERSTANDING</div>
+        <h3>Justify your track design</h3>
+        <p class="small">
+          Explain why you chose your functions, transformations, and domain restrictions.
+          Include at least one sentence about how you made adjacent pieces connect.
+        </p>
+        <textarea class="justification" id="coasterJustification" placeholder="I chose ... because ... My domain restrictions ... The pieces connect because ..."></textarea>
+
+        <div class="choice-row">
+          <button class="action" id="checkCoaster">TEST & APPROVE TRACK</button>
+        </div>
+        <div class="feedback" id="coasterFeedback"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="station3">
+      <div class="kicker">RIDE 03 • PI IN THE SKY</div>
+      <h2>Build and animate the Ferris wheel</h2>
+      <p>
+        A Ferris wheel turns circular motion into a sinusoidal height-versus-time graph.
+        Because riders board at the <strong>bottom</strong> at time 0, your model should begin at a minimum.
+      </p>
+
+      <div class="confirm-panel" id="ferrisConfirm">
+        <h3 style="margin-top:0">Choose the correct starting model</h3>
+        <p class="small">Which function naturally starts the rider at the bottom of the wheel when t = 0?</p>
+        <div class="choice-row" id="ferrisModelChoices">
+          <button class="choice" data-answer="wrong">h(t) = A cos(Bt) + D</button>
+          <button class="choice" data-answer="correct">h(t) = −A cos(Bt) + D</button>
+          <button class="choice" data-answer="wrong">h(t) = A sin(Bt) + D</button>
+        </div>
+        <div class="feedback" id="ferrisConfirmFeedback">Think about cos(0) = 1 and where the rider should begin.</div>
+      </div>
+
+      <div class="builder locked" id="ferrisBuilder">
+        <div>
+          <div class="ferris-stage"><canvas id="ferrisCanvas"></canvas></div>
+          <div class="rider-key"><span class="rider-dot"></span> highlighted rider • graph point shows the same rider's height</div>
+          <div class="ferris-buttons">
+            <button class="action" id="playFerris">▶ START RIDE</button>
+            <button class="action" id="resetFerris">↺ RESET TO BOARDING</button>
+          </div>
+        </div>
+
+        <div class="formula-card">
+          <div class="control"><label>Wheel radius</label><input id="radius" type="range" min="3" max="8" step=".5" value="5"><div class="readout"><span>amplitude</span><span class="badge" id="radiusOut">5</span></div></div>
+          <div class="control"><label>Height of wheel center</label><input id="centerHeight" type="range" min="5" max="13" step=".5" value="8"><div class="readout"><span>vertical shift</span><span class="badge" id="centerOut">8</span></div></div>
+          <div class="control"><label>Period (seconds)</label><input id="period" type="range" min="4" max="20" step="1" value="10"><div class="readout"><span>one full revolution</span><span class="badge" id="periodOut">10 s</span></div></div>
+          <div class="control"><label>Number of cars</label><input id="cars" type="range" min="6" max="16" step="1" value="10"><div class="readout"><span>around wheel</span><span class="badge" id="carsOut">10</span></div></div>
+          <div class="math" id="ferrisEquation"></div>
+          <div class="param-list">
+            <div class="param"><span class="small">Amplitude</span><strong id="ampSummary">5</strong></div>
+            <div class="param"><span class="small">Frequency</span><strong id="freqSummary">0.10</strong></div>
+            <div class="param"><span class="small">B-value</span><strong id="bSummary">0.63</strong></div>
+            <div class="param"><span class="small">Max height</span><strong id="maxSummary">13</strong></div>
+          </div>
+          <div class="concept-note">
+            The animation uses your period. A shorter period makes the wheel and the height graph move faster;
+            a larger radius increases the vertical range.
+          </div>
+          <button class="action" id="checkFerris">OPEN THE RIDE</button>
+          <div class="feedback" id="ferrisFeedback"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="station4">
+      <div class="kicker">PARK REVIEW</div>
+      <h2>What do the parameters actually do?</h2>
+      <div class="triple">
+        <div class="ride-card"><h3>Amplitude</h3><p class="small">Controls distance from the midline: wave height, coaster hill size, or Ferris wheel radius.</p></div>
+        <div class="ride-card"><h3>Frequency / B</h3><p class="small">Controls how quickly cycles repeat. Larger B means a shorter period.</p></div>
+        <div class="ride-card"><h3>Shifts</h3><p class="small">Vertical shift moves the midline; phase shift moves the cycle left or right.</p></div>
+      </div>
+
+      <div class="reflection-card" style="margin-top:16px">
+        <div class="kicker">FINAL DESIGN REFLECTION</div>
+        <h3>Make the park safer—or more thrilling</h3>
+        <p class="small">
+          Choose one ride. Explain one parameter change you would make and how that change would affect the rider's experience.
+        </p>
+        <textarea id="reflection" placeholder="Example: I would increase the amplitude of the coaster because..."></textarea>
+        <div class="checklist">
+          <div class="check">✓ Name a parameter</div>
+          <div class="check">✓ Explain the graph change</div>
+          <div class="check">✓ Connect it to the ride</div>
+          <div class="check">✓ Discuss realism, thrill, or safety</div>
+        </div>
+        <button class="action" id="finishBtn" style="margin-top:14px">COMPLETE PARK DESIGN</button>
+        <div class="feedback" id="finishFeedback"></div>
+      </div>
+    </section>
+
+  </main>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+let completed=new Set();
+
+$("#startBtn").onclick=()=>$("#park").scrollIntoView({behavior:"smooth"});
+$$(".nav-btn").forEach(b=>b.onclick=()=>{
+  $$(".nav-btn").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $("#"+b.dataset.target).scrollIntoView({behavior:"smooth",block:"start"});
+});
+function markDone(n){
+  completed.add(n);
+  $("#progressBar").style.width=(completed.size/4*100)+"%";
+}
+function fitCanvas(c){
+  const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);
+  const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);
+  return{x,w:r.width,h:r.height};
+}
+function graphAxes(ctx,w,h,xmin,xmax,ymin,ymax){
+  const sx=x=>(x-xmin)/(xmax-xmin)*w, sy=y=>h-(y-ymin)/(ymax-ymin)*h;
+  ctx.strokeStyle="#17384a";ctx.lineWidth=1;
+  for(let i=Math.ceil(xmin);i<=Math.floor(xmax);i++){ctx.beginPath();ctx.moveTo(sx(i),0);ctx.lineTo(sx(i),h);ctx.stroke()}
+  for(let i=Math.ceil(ymin);i<=Math.floor(ymax);i++){ctx.beginPath();ctx.moveTo(0,sy(i));ctx.lineTo(w,sy(i));ctx.stroke()}
+  ctx.strokeStyle="#567386";ctx.lineWidth=1.3;
+  if(ymin<0&&ymax>0){ctx.beginPath();ctx.moveTo(0,sy(0));ctx.lineTo(w,sy(0));ctx.stroke()}
+  if(xmin<0&&xmax>0){ctx.beginPath();ctx.moveTo(sx(0),0);ctx.lineTo(sx(0),h);ctx.stroke()}
+  return{sx,sy}
+}
+function plotFunction(c,fn,{xmin=0,xmax=12,ymin=0,ymax=15,color="#58e1f2"}={}){
+  const {x,w,h}=fitCanvas(c);x.clearRect(0,0,w,h);const {sx,sy}=graphAxes(x,w,h,xmin,xmax,ymin,ymax);
+  x.strokeStyle=color;x.lineWidth=3;x.beginPath();
+  for(let i=0;i<=700;i++){
+    const xv=xmin+(xmax-xmin)*i/700,yv=fn(xv);
+    if(i===0)x.moveTo(sx(xv),sy(yv));else x.lineTo(sx(xv),sy(yv));
+  }x.stroke();
+}
+
+// hero
+function drawHero(){
+  const c=$("#heroCanvas"),{x,w,h}=fitCanvas(c);x.clearRect(0,0,w,h);
+  x.strokeStyle="#58e1f2";x.lineWidth=3;x.beginPath();
+  for(let i=0;i<=500;i++){let px=i/500*w,py=h*.58-Math.sin(i/500*Math.PI*5)*48;if(i===0)x.moveTo(px,py);else x.lineTo(px,py)}x.stroke();
+  x.strokeStyle="#b8f56b";x.lineWidth=3;x.beginPath();
+  for(let i=0;i<=500;i++){let px=i/500*w,py=h*.68-Math.sin(i/500*Math.PI*4+1)*65;if(i===0)x.moveTo(px,py);else x.lineTo(px,py)}x.stroke();
+  x.strokeStyle="#ffd56a";x.lineWidth=3;x.beginPath();x.arc(w*.78,h*.32,70,0,Math.PI*2);x.stroke();
+  for(let k=0;k<10;k++){let a=2*Math.PI*k/10;x.fillStyle="#ff8c7a";x.beginPath();x.arc(w*.78+70*Math.cos(a),h*.32+70*Math.sin(a),6,0,Math.PI*2);x.fill()}
+}
+
+// Parent functions
+function drawParents(){
+  const c=$("#parentCanvas"),{x,w,h}=fitCanvas(c),xmin=-2*Math.PI,xmax=2*Math.PI,ymin=-1.6,ymax=1.6;
+  const {sx,sy}=graphAxes(x,w,h,xmin,xmax,ymin,ymax);
+  function draw(fn,color){x.strokeStyle=color;x.lineWidth=3;x.beginPath();for(let i=0;i<=700;i++){let xv=xmin+(xmax-xmin)*i/700,y=fn(xv);if(i===0)x.moveTo(sx(xv),sy(y));else x.lineTo(sx(xv),sy(y))}x.stroke()}
+  draw(Math.sin,"#58e1f2");draw(Math.cos,"#b8f56b");
+}
+
+// Unit circle check
+$("#checkUnit").onclick=()=>{
+  const inputs=$$(".unit-card input");let ok=0;
+  inputs.forEach(inp=>{
+    const target=+(inp.dataset.sin??inp.dataset.cos),v=+inp.value;
+    if(Math.abs(v-target)<.03){inp.style.borderColor="#76e3a6";ok++}else inp.style.borderColor="#ff8d97";
+  });
+  $("#unitFeedback").textContent=ok===inputs.length?"Perfect recall. You're ready to design the rides.":"Check any red boxes. Decimals within about 0.03 of the benchmark are accepted.";
+  if(ok===inputs.length)markDone(0);
+};
+
+// Wave concept checkpoint
+let waveBottomCorrect=false, waveMidlineCorrect=false;
+function updateWaveUnlock(){
+  if(waveBottomCorrect && waveMidlineCorrect){
+    $("#waveBuilder").classList.remove("locked");
+    $("#wavePrecheck").classList.add("locked");
+    $("#wavePreFeedback").textContent="Unlocked. Now make the graph match the physical pool.";
+    waveState();
+  }
+}
+$$("#waveBottomChoices .choice").forEach(b=>b.onclick=()=>{
+  $$("#waveBottomChoices .choice").forEach(x=>x.classList.remove("correct","wrong"));
+  waveBottomCorrect=b.dataset.answer==="correct";
+  b.classList.add(waveBottomCorrect?"correct":"wrong");
+  $("#wavePreFeedback").textContent=waveBottomCorrect
+    ?"Yes. The minimum y-value represents the bottom of the pool."
+    :"Not yet. Ask what physical location the lowest y-value should represent.";
+  updateWaveUnlock();
+});
+$$("#waveMidlineChoices .choice").forEach(b=>b.onclick=()=>{
+  $$("#waveMidlineChoices .choice").forEach(x=>x.classList.remove("correct","wrong"));
+  waveMidlineCorrect=b.dataset.answer==="correct";
+  b.classList.add(waveMidlineCorrect?"correct":"wrong");
+  $("#wavePreFeedback").textContent=waveMidlineCorrect
+    ?"Yes. D, the midline, represents the water height."
+    :"Try again. The midline is the average vertical level of the sinusoidal model.";
+  updateWaveUnlock();
+});
+
+function waveState(){
+  const type=$("#waveType").value,A=+$("#waveA").value,B=+$("#waveB").value,D=+$("#waveD").value;
+  $("#waveAOut").textContent=A;$("#waveBOut").textContent=B;$("#waveDOut").textContent=D;
+  $("#poolBottomOut").textContent=(D-A).toFixed(1);
+  $("#waterHeightOut").textContent=D.toFixed(1);
+  $("#waveMaxOut").textContent=(D+A).toFixed(1);
+  $("#wavePeriodOut").textContent=(2*Math.PI/B).toFixed(2);
+  $("#waveEquation").textContent=`y = ${A}${type}(${B}x) + ${D}`;
+
+  const c=$("#waveCanvas"),{x,w,h}=fitCanvas(c),xmin=0,xmax=12,ymin=0,ymax=14;
+  const {sx,sy}=graphAxes(x,w,h,xmin,xmax,ymin,ymax);
+
+  // pool/water context
+  x.fillStyle="rgba(88,225,242,.07)";
+  x.fillRect(0,sy(D),w,sy(0)-sy(D));
+  x.strokeStyle="rgba(88,225,242,.65)";
+  x.setLineDash([7,6]);x.beginPath();x.moveTo(0,sy(D));x.lineTo(w,sy(D));x.stroke();x.setLineDash([]);
+  x.fillStyle="#9fb4c4";x.font="12px system-ui";x.fillText("water height / midline",10,sy(D)-8);
+  x.fillText("pool bottom = minimum",10,sy(D-A)+18);
+
+  x.strokeStyle="#58e1f2";x.lineWidth=3;x.beginPath();
+  for(let i=0;i<=700;i++){
+    const xv=xmin+(xmax-xmin)*i/700;
+    const yv=A*(type==="sin"?Math.sin(B*xv):Math.cos(B*xv))+D;
+    if(i===0)x.moveTo(sx(xv),sy(yv));else x.lineTo(sx(xv),sy(yv));
+  }
+  x.stroke();
+}
+["waveType","waveA","waveB","waveD"].forEach(id=>$("#"+id).oninput=waveState);
+$("#checkWave").onclick=()=>{
+  const A=+$("#waveA").value,D=+$("#waveD").value;
+  if(!(waveBottomCorrect&&waveMidlineCorrect)){
+    $("#waveFeedback").textContent="Complete the parameter checkpoint first.";return;
+  }
+  if(D-A<0){
+    $("#waveFeedback").textContent="Your modeled pool bottom is below y = 0. Raise D or reduce A.";return;
+  }
+  $("#waveFeedback").textContent=`Wave pool approved. Bottom = ${(D-A).toFixed(1)}, water height = ${D.toFixed(1)}, maximum = ${(D+A).toFixed(1)}.`;
+  markDone(1);
+};
+
+// Piecewise roller coaster
+let coasterSegments=[
+  {type:"sin",A:4,B:1,C:0,D:7,start:0,end:4},
+  {type:"cos",A:3,B:1.25,C:4,D:7,start:4,end:8}
+];
+
+function segY(s,x){
+  const trig=s.type==="sin"?Math.sin:Math.cos;
+  return s.A*trig(s.B*(x-s.C))+s.D;
+}
+function renderSegments(){
+  const list=$("#segmentList"); list.innerHTML="";
+  coasterSegments.forEach((s,i)=>{
+    const card=document.createElement("div");
+    card.className="segment-card";
+    card.innerHTML=`
+      <div class="segment-head">
+        <strong>Segment ${i+1}</strong>
+        ${coasterSegments.length>2?`<button class="remove-segment" data-remove="${i}">remove</button>`:""}
+      </div>
+      <div class="segment-controls">
+        <div class="control"><label>Function</label>
+          <select data-i="${i}" data-key="type"><option value="sin"${s.type==="sin"?" selected":""}>sine</option><option value="cos"${s.type==="cos"?" selected":""}>cosine</option></select>
+        </div>
+        <div class="control"><label>A</label><input type="number" step=".5" value="${s.A}" data-i="${i}" data-key="A"></div>
+        <div class="control"><label>B</label><input type="number" step=".25" min=".1" value="${s.B}" data-i="${i}" data-key="B"></div>
+        <div class="control"><label>Phase C</label><input type="number" step=".5" value="${s.C}" data-i="${i}" data-key="C"></div>
+        <div class="control"><label>Vertical D</label><input type="number" step=".5" value="${s.D}" data-i="${i}" data-key="D"></div>
+        <div class="control"><label>Domain start</label><input type="number" step=".5" value="${s.start}" data-i="${i}" data-key="start"></div>
+        <div class="control"><label>Domain end</label><input type="number" step=".5" value="${s.end}" data-i="${i}" data-key="end"></div>
+      </div>
+      <div class="segment-equation">${segmentEquation(s)}</div>`;
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll("select,input").forEach(el=>el.oninput=()=>{
+    const i=+el.dataset.i,key=el.dataset.key;
+    coasterSegments[i][key]=key==="type"?el.value:+el.value;
+    renderSegments();
+    drawCoaster();
+  });
+  list.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{
+    coasterSegments.splice(+b.dataset.remove,1);renderSegments();drawCoaster();
+  });
+  updateCoasterSummary();
+}
+function segmentEquation(s){
+  return `y = ${s.A}${s.type}(${s.B}(x − ${s.C})) + ${s.D},  ${s.start} ≤ x ≤ ${s.end}`;
+}
+$("#addSegment").onclick=()=>{
+  if(coasterSegments.length>=4){
+    $("#coasterFeedback").textContent="Four segments is the maximum for this design studio.";return;
+  }
+  const last=coasterSegments[coasterSegments.length-1];
+  const start=last.end,end=start+4;
+  coasterSegments.push({type:coasterSegments.length%2?"sin":"cos",A:3,B:1,C:start,D:7,start,end});
+  renderSegments();drawCoaster();
+};
+function drawCoaster(){
+  const c=$("#coasterCanvas"),{x,w,h}=fitCanvas(c),xmin=0,xmax=16,ymin=0,ymax=16;
+  const {sx,sy}=graphAxes(x,w,h,xmin,xmax,ymin,ymax);
+  const colors=["#b8f56b","#58e1f2","#ffd56a","#a78cff"];
+  coasterSegments.forEach((s,j)=>{
+    x.strokeStyle=colors[j%colors.length];x.lineWidth=3;x.beginPath();
+    const steps=180;
+    for(let i=0;i<=steps;i++){
+      const xv=s.start+(s.end-s.start)*i/steps,yv=segY(s,xv);
+      if(i===0)x.moveTo(sx(xv),sy(yv));else x.lineTo(sx(xv),sy(yv));
+    }x.stroke();
+    x.fillStyle=colors[j%colors.length];
+    x.beginPath();x.arc(sx(s.start),sy(segY(s,s.start)),4,0,Math.PI*2);x.fill();
+    x.beginPath();x.arc(sx(s.end),sy(segY(s,s.end)),4,0,Math.PI*2);x.fill();
+  });
+}
+function continuityReport(){
+  const sorted=[...coasterSegments].sort((a,b)=>a.start-b.start);
+  let maxGap=0,domainGap=0;
+  for(let i=0;i<sorted.length-1;i++){
+    domainGap=Math.max(domainGap,Math.abs(sorted[i].end-sorted[i+1].start));
+    maxGap=Math.max(maxGap,Math.abs(segY(sorted[i],sorted[i].end)-segY(sorted[i+1],sorted[i+1].start)));
+  }
+  return{maxGap,domainGap,sorted};
+}
+function updateCoasterSummary(){
+  const r=continuityReport();
+  $("#coasterSummary").innerHTML=
+    `<strong>${coasterSegments.length} pieces</strong><br>`+
+    `Largest domain mismatch: ${r.domainGap.toFixed(2)} units<br>`+
+    `Largest vertical endpoint gap: ${r.maxGap.toFixed(2)} units`;
+}
+$("#checkCoaster").onclick=()=>{
+  const text=$("#coasterJustification").value.trim();
+  const r=continuityReport();
+  const invalid=coasterSegments.some(s=>s.end<=s.start||s.B<=0||segY(s,(s.start+s.end)/2)<0);
+  if(coasterSegments.length<2){
+    $("#coasterFeedback").textContent="Use at least two trig pieces so the coaster is genuinely piecewise.";return;
+  }
+  if(invalid){
+    $("#coasterFeedback").textContent="Check your domains and parameters. Every segment needs start < end, B > 0, and a usable track height.";return;
+  }
+  if(r.domainGap>.05){
+    $("#coasterFeedback").textContent=`Your domains do not meet yet. Largest horizontal gap/overlap is ${r.domainGap.toFixed(2)}.`;return;
+  }
+  if(r.maxGap>1.0){
+    $("#coasterFeedback").textContent=`The track has a jump of ${r.maxGap.toFixed(2)} vertical units. Transform a neighboring piece so its endpoint meets more closely.`;return;
+  }
+  if(text.length<100){
+    $("#coasterFeedback").textContent="Your mathematics works. Now justify the choices in at least a few complete sentences (about 100 characters or more).";return;
+  }
+  $("#coasterFeedback").textContent=`Track approved. Your pieces meet within ${r.maxGap.toFixed(2)} vertical units and your justification explains the design.`;
+  markDone(2);
+};
+
+// Ferris concept check + animation
+let ferrisModelConfirmed=false;
+let ferrisRunning=false;
+let ferrisElapsed=0;
+let ferrisLast=null;
+let ferrisRAF=null;
+
+$$("#ferrisModelChoices .choice").forEach(b=>b.onclick=()=>{
+  $$("#ferrisModelChoices .choice").forEach(x=>x.classList.remove("correct","wrong"));
+  ferrisModelConfirmed=b.dataset.answer==="correct";
+  b.classList.add(ferrisModelConfirmed?"correct":"wrong");
+  if(ferrisModelConfirmed){
+    $("#ferrisConfirmFeedback").textContent="Correct. −A cos(Bt) + D starts at D − A, the bottom of the wheel.";
+    $("#ferrisBuilder").classList.remove("locked");
+    ferrisState();
+  }else{
+    $("#ferrisConfirmFeedback").textContent="Not quite. Since cos(0)=1, a negative cosine gives D − A at t=0.";
+  }
+});
+
+function ferrisState(){
+  const r=+$("#radius").value,D=+$("#centerHeight").value,T=+$("#period").value,n=+$("#cars").value;
+  $("#radiusOut").textContent=r;$("#centerOut").textContent=D;$("#periodOut").textContent=T+" s";$("#carsOut").textContent=n;
+  const f=1/T,B=2*Math.PI/T;
+  $("#ampSummary").textContent=r.toFixed(1);$("#freqSummary").textContent=f.toFixed(2);$("#bSummary").textContent=B.toFixed(2);$("#maxSummary").textContent=(D+r).toFixed(1);
+  $("#ferrisEquation").textContent=`h(t) = −${r} cos(${B.toFixed(2)}t) + ${D}`;
+  drawFerris(ferrisElapsed);
+}
+function drawFerris(time=0){
+  const c=$("#ferrisCanvas"),{x,w,h}=fitCanvas(c),rVal=+$("#radius").value,D=+$("#centerHeight").value,n=+$("#cars").value,T=+$("#period").value;
+  x.clearRect(0,0,w,h);
+  const cx=w*.34,cy=h*.47,R=Math.min(w,h)*.28;
+  const omega=2*Math.PI/T;
+  const theta=Math.PI/2 + omega*time;
+
+  // wheel + supports
+  x.strokeStyle="#ffd56a";x.lineWidth=4;x.beginPath();x.arc(cx,cy,R,0,Math.PI*2);x.stroke();
+  x.strokeStyle="#456275";x.lineWidth=3;x.beginPath();x.moveTo(cx,cy);x.lineTo(cx-R*.55,h*.9);x.moveTo(cx,cy);x.lineTo(cx+R*.55,h*.9);x.stroke();
+
+  // cars
+  for(let i=0;i<n;i++){
+    const a=theta+2*Math.PI*i/n;
+    const isRider=i===0;
+    x.fillStyle=isRider?"#ff8c7a":"#58e1f2";
+    x.beginPath();x.arc(cx+R*Math.cos(a),cy+R*Math.sin(a),isRider?8:5,0,Math.PI*2);x.fill();
+  }
+
+  // graph
+  const gx=w*.64,gw=w*.33,gh=h*.5,gy=h*.17;
+  x.strokeStyle="#264458";x.strokeRect(gx,gy,gw,gh);
+  const minH=D-rVal,maxH=D+rVal;
+  const graphY=v=>gy+gh-(v-(minH-1))/((maxH+1)-(minH-1))*gh;
+  x.strokeStyle="#b8f56b";x.lineWidth=2.5;x.beginPath();
+  for(let i=0;i<=240;i++){
+    const t=i/240*T;
+    const height=-rVal*Math.cos(omega*t)+D;
+    const px=gx+i/240*gw,py=graphY(height);
+    if(i===0)x.moveTo(px,py);else x.lineTo(px,py);
+  }x.stroke();
+
+  const cycleTime=((time%T)+T)%T;
+  const riderHeight=-rVal*Math.cos(omega*cycleTime)+D;
+  const px=gx+(cycleTime/T)*gw,py=graphY(riderHeight);
+  x.fillStyle="#ff8c7a";x.beginPath();x.arc(px,py,6,0,Math.PI*2);x.fill();
+  x.fillStyle="#9fb4c4";x.font="12px system-ui";
+  x.fillText("height vs. time",gx+8,gy+16);
+  x.fillText(`t = ${cycleTime.toFixed(1)} s`,gx+8,gy+34);
+  x.fillText(`height = ${riderHeight.toFixed(1)}`,gx+8,gy+50);
+}
+function ferrisFrame(ts){
+  if(!ferrisRunning)return;
+  if(ferrisLast===null)ferrisLast=ts;
+  ferrisElapsed+=(ts-ferrisLast)/1000;
+  ferrisLast=ts;
+  drawFerris(ferrisElapsed);
+  ferrisRAF=requestAnimationFrame(ferrisFrame);
+}
+$("#playFerris").onclick=()=>{
+  if(!ferrisModelConfirmed){
+    $("#ferrisConfirmFeedback").textContent="Confirm the negative-cosine model first.";return;
+  }
+  ferrisRunning=!ferrisRunning;
+  $("#playFerris").textContent=ferrisRunning?"❚❚ PAUSE RIDE":"▶ START RIDE";
+  if(ferrisRunning){ferrisLast=null;ferrisRAF=requestAnimationFrame(ferrisFrame)}
+};
+$("#resetFerris").onclick=()=>{
+  ferrisElapsed=0;ferrisLast=null;drawFerris(0);
+};
+["radius","centerHeight","period","cars"].forEach(id=>$("#"+id).oninput=ferrisState);
+$("#checkFerris").onclick=()=>{
+  const r=+$("#radius").value,D=+$("#centerHeight").value;
+  if(!ferrisModelConfirmed){
+    $("#ferrisFeedback").textContent="First confirm why the ride needs a negative cosine model.";return;
+  }
+  if(D-r<0){
+    $("#ferrisFeedback").textContent="The wheel would extend below ground. Raise the center height or reduce the radius.";return;
+  }
+  $("#ferrisFeedback").textContent="Ferris wheel approved. The highlighted rider starts at the minimum and moves with your chosen period.";
+  markDone(3);
+};
+
+// Reflection
+$("#finishBtn").onclick=()=>{
+  const t=$("#reflection").value.trim();
+  $("#finishFeedback").textContent=t.length>=80?"Park design complete. You connected the graph parameters to an actual rider experience.":"Add a little more detail. Name the parameter, explain the graph change, and connect it to thrill, safety, or realism.";
+};
+
+function redrawAll(){drawHero();drawParents();waveState();renderSegments();drawCoaster();ferrisState()}
+window.addEventListener("resize",redrawAll);
+redrawAll();
+</script>
+</body>
+</html>
